@@ -2,6 +2,8 @@ package com.model;
 
 import lombok.*;
 import java.time.LocalDate;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 
 @Entity
 @Table(name = "books")
