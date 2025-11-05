@@ -1,5 +1,6 @@
 package com.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -62,6 +63,7 @@ public class Reader {
     private String avatarUrl;
     
     @OneToMany(mappedBy = "reader", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<BorrowTicket> borrowTickets;
     
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -82,9 +84,9 @@ public class Reader {
     }
     
     public enum ReaderStatus {
-        ACTIVE,     // Đang hoạt động
-        EXPIRED,    // Hết hạn
-        SUSPENDED,  // Bị đình chỉ
-        BLOCKED     // Bị khóa
+        ACTIVE,
+        EXPIRED,
+        SUSPENDED,
+        BLOCKED
     }
 }

@@ -1,5 +1,6 @@
 package com.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -20,12 +21,14 @@ public class BorrowTicket {
     @Column(unique = true, nullable = false, length = 50)
     private String ticketCode;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "reader_id", nullable = false)
+    @JsonIgnoreProperties({"borrowTickets", "hibernateLazyInitializer", "handler"})
     private Reader reader;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Book book;
     
     @Column(nullable = false)
@@ -46,7 +49,8 @@ public class BorrowTicket {
     @Column(length = 100)
     private String returnedTo;
     
-    @OneToOne(mappedBy = "borrowTicket", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "borrowTicket", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"borrowTicket", "hibernateLazyInitializer", "handler"})
     private Penalty penalty;
     
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -81,9 +85,9 @@ public class BorrowTicket {
     }
     
     public enum BorrowStatus {
-        BORROWED,   // Đang mượn
-        RETURNED,   // Đã trả
-        OVERDUE,    // Quá hạn
-        LOST        // Mất sách
+        BORROWED,
+        RETURNED,
+        OVERDUE,
+        LOST
     }
 }

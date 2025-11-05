@@ -10,7 +10,6 @@ import jakarta.validation.constraints.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Book {
     
     @Id

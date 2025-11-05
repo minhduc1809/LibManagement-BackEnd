@@ -6,6 +6,7 @@ import com.model.Penalty;
 import com.model.Reader;
 import com.repository.BookRepository;
 import com.repository.BorrowRepository;
+import com.repository.PenaltyRepository;
 import com.repository.ReaderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,13 +26,13 @@ public class BorrowService {
     private final BorrowRepository borrowRepository;
     private final BookRepository bookRepository;
     private final ReaderRepository readerRepository;
+    private final PenaltyRepository penaltyRepository;
     
     private static final int MAX_BORROW_BOOKS = 5;
     private static final int DEFAULT_BORROW_DAYS = 14;
     private static final BigDecimal OVERDUE_FEE_PER_DAY = new BigDecimal("5000");
     
     public BorrowTicket createBorrowTicket(Long readerId, Long bookId, Integer quantity, Integer borrowDays) {
-        // Kiểm tra độc giả
         Reader reader = readerRepository.findById(readerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả với ID: " + readerId));
         
@@ -43,13 +44,11 @@ public class BorrowService {
             throw new RuntimeException("Thẻ độc giả đã hết hạn");
         }
         
-        // Kiểm tra số sách đang mượn
         long activeBorrows = borrowRepository.countActiveBorrowsByReaderId(readerId);
         if (activeBorrows >= MAX_BORROW_BOOKS) {
             throw new RuntimeException("Độc giả đã mượn tối đa " + MAX_BORROW_BOOKS + " quyển sách");
         }
         
-        // Kiểm tra sách
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với ID: " + bookId));
         
@@ -65,16 +64,13 @@ public class BorrowService {
             throw new RuntimeException("Không đủ sách để cho mượn. Còn lại: " + book.getAvailableQuantity());
         }
         
-        // Tạo mã phiếu mượn
         String ticketCode = generateTicketCode();
         
-        // Tính ngày hẹn trả
         if (borrowDays == null || borrowDays <= 0) {
             borrowDays = DEFAULT_BORROW_DAYS;
         }
         LocalDate dueDate = LocalDate.now().plusDays(borrowDays);
         
-        // Tạo phiếu mượn
         BorrowTicket borrowTicket = BorrowTicket.builder()
                 .ticketCode(ticketCode)
                 .reader(reader)
@@ -85,7 +81,6 @@ public class BorrowService {
                 .status(BorrowTicket.BorrowStatus.BORROWED)
                 .build();
         
-        // Cập nhật số lượng sách
         book.setAvailableQuantity(book.getAvailableQuantity() - quantity);
         if (book.getAvailableQuantity() == 0) {
             book.setStatus(Book.BookStatus.OUT_OF_STOCK);
@@ -104,17 +99,14 @@ public class BorrowService {
             throw new RuntimeException("Sách đã được trả trước đó");
         }
         
-        // Cập nhật trạng thái phiếu mượn
         borrowTicket.setReturnDate(LocalDate.now());
         borrowTicket.setStatus(BorrowTicket.BorrowStatus.RETURNED);
         borrowTicket.setReturnedTo(returnedTo);
         
-        // Kiểm tra quá hạn và tạo phiếu phạt nếu cần
         if (borrowTicket.isOverdue()) {
             createOverduePenalty(borrowTicket);
         }
         
-        // Cập nhật số lượng sách
         Book book = borrowTicket.getBook();
         book.setAvailableQuantity(book.getAvailableQuantity() + borrowTicket.getQuantity());
         if (book.getAvailableQuantity() > 0 && book.getStatus() == Book.BookStatus.OUT_OF_STOCK) {
@@ -154,9 +146,8 @@ public class BorrowService {
         
         borrowTicket.setStatus(BorrowTicket.BorrowStatus.LOST);
         
-        // Tạo phiếu phạt mất sách
         Book book = borrowTicket.getBook();
-        BigDecimal lostBookFee = new BigDecimal("100000"); // Phí mất sách cố định
+        BigDecimal lostBookFee = new BigDecimal("100000");
         
         Penalty penalty = Penalty.builder()
                 .borrowTicket(borrowTicket)
@@ -167,7 +158,7 @@ public class BorrowService {
                 .processedBy(processedBy)
                 .build();
         
-        borrowTicket.setPenalty(penalty);
+        penaltyRepository.save(penalty);
         
         log.info("Báo mất sách - Phiếu mượn: {}", borrowTicket.getTicketCode());
         return borrowRepository.save(borrowTicket);
@@ -185,7 +176,7 @@ public class BorrowService {
                 .paymentStatus(Penalty.PaymentStatus.UNPAID)
                 .build();
         
-        borrowTicket.setPenalty(penalty);
+        penaltyRepository.save(penalty);
         log.info("Tạo phiếu phạt quá hạn: {} - Số tiền: {}", borrowTicket.getTicketCode(), penaltyAmount);
     }
     
