@@ -6516,3 +6516,14 @@ Caused by: java.util.ConcurrentModificationException: null
         b1_0.updated_at 
     from
         books b1_0
+2025-11-05T15:13:30.155+07:00 DEBUG 21528 --- [library-management-system] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /search
+2025-11-05T15:13:30.156+07:00 DEBUG 21528 --- [library-management-system] [http-nio-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-11-05T15:13:30.156+07:00 DEBUG 21528 --- [library-management-system] [http-nio-8080-exec-8] o.s.s.w.a.Http403ForbiddenEntryPoint     : Pre-authenticated entry point called. Rejecting access
+2025-11-05T15:13:30.171+07:00 DEBUG 21528 --- [library-management-system] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /error
+2025-11-05T15:13:30.171+07:00 DEBUG 21528 --- [library-management-system] [http-nio-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-11-05T15:13:30.171+07:00 DEBUG 21528 --- [library-management-system] [http-nio-8080-exec-8] o.s.s.w.a.Http403ForbiddenEntryPoint     : Pre-authenticated entry point called. Rejecting access
+2025-11-05T15:14:18.083+07:00  INFO 21528 --- [library-management-system] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-05T15:14:18.086+07:00  INFO 21528 --- [library-management-system] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-11-05T15:14:18.089+07:00  INFO 21528 --- [library-management-system] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-05T15:14:18.089+07:00  INFO 21528 --- [library-management-system] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown initiated...
+2025-11-05T15:14:18.092+07:00  INFO 21528 --- [library-management-system] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown completed.
