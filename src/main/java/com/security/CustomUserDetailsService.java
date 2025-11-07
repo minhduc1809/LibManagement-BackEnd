@@ -1,5 +1,6 @@
 package com.security;
 
+import com.model.Role;
 import com.model.UserAccount;
 import com.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .authorities(mapRolesToAuthorities(user))
+                .authorities(mapRolesToAuthorities(user.getRoles()))
                 .accountExpired(false)
                 .accountLocked(!user.getAccountNonLocked())
                 .credentialsExpired(false)
@@ -46,7 +49,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .authorities(mapRolesToAuthorities(user))
+                .authorities(mapRolesToAuthorities(user.getRoles()))
                 .accountExpired(false)
                 .accountLocked(!user.getAccountNonLocked())
                 .credentialsExpired(false)
@@ -54,9 +57,15 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .build();
     }
     
-    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(UserAccount user) {
-        return user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .collect(Collectors.toList());
+    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Set<Role> roles) {
+        // Sử dụng ArrayList để tránh ConcurrentModificationException
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        
+        // Duyệt qua roles một cách an toàn
+        for (Role role : roles) {
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
+        }
+        
+        return authorities;
     }
 }

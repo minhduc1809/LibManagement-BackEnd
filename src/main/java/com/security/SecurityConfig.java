@@ -49,17 +49,22 @@ public class SecurityConfig {
             .cors(cors -> cors.configure(http))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
+                // Public endpoints - KHÔNG CẦN AUTHENTICATION
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/admin/**").permitAll() // ⚠️ CHỈ CHO DEBUG - XÓA TRONG PRODUCTION
                 .requestMatchers("/books/**").permitAll()
                 .requestMatchers("/readers/**").permitAll()
+                
                 // Statistics - require authentication
                 .requestMatchers("/statistics/**").authenticated()
+                
                 // Admin only
                 .requestMatchers("/users/**").hasRole("ADMIN")
+                
                 // Librarian and Admin
                 .requestMatchers("/borrows/**", "/penalties/**", "/reservations/**")
                     .hasAnyRole("LIBRARIAN", "ADMIN")
+                
                 // Any authenticated user
                 .anyRequest().authenticated()
             )
