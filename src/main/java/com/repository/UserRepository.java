@@ -11,8 +11,10 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserAccount, Long> {
-    // Trong UserRepository.java
-    Optional<UserAccount> findByUsername(String username);
+    
+    // ✅ FIX: Eager load roles để tránh lazy loading exception
+    @Query("SELECT DISTINCT u FROM UserAccount u LEFT JOIN FETCH u.roles WHERE u.username = :username")
+    Optional<UserAccount> findByUsername(@Param("username") String username);
     
     Optional<UserAccount> findByEmail(String email);
     

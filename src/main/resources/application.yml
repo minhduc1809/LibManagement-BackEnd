@@ -19,9 +19,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        enable_lazy_load_no_trans: true
+        enable_lazy_load_no_trans: false
         dialect: org.hibernate.dialect.MySQL8Dialect
-    open-in-view: false
+    open-in-view: true
 
   jackson:
     serialization:
@@ -34,8 +34,6 @@ spring:
     user:
       name: admin
       password: admin123
-
-# JWT Configuration
 jwt:
   secret: mySecretKeyForLibraryManagementSystemMustBeLongEnoughForHS256Algorithm
   expiration: 86400000        # 24 hours in milliseconds
@@ -48,7 +46,7 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-    include-stacktrace: never
+    include-stacktrace: on_param
 
 logging:
   level:

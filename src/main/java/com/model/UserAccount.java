@@ -40,21 +40,28 @@ public class UserAccount {
     @Column(length = 15)
     private String phoneNumber;
     
+    // ✅ FIX: Đổi sang EAGER và thêm @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+    @Builder.Default
+    @ToString.Exclude  // Tránh infinite loop khi toString
+    @EqualsAndHashCode.Exclude  // Tránh issue khi compare
     private Set<Role> roles = new HashSet<>();
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean enabled = true;
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean accountNonLocked = true;
     
     @Column(nullable = false)
+    @Builder.Default
     private Integer failedLoginAttempts = 0;
     
     private LocalDateTime lastLoginAt;
@@ -74,6 +81,9 @@ public class UserAccount {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (roles == null) {
+            roles = new HashSet<>();
+        }
     }
     
     @PreUpdate
@@ -82,14 +92,20 @@ public class UserAccount {
     }
     
     public void addRole(Role role) {
+        if (this.roles == null) {
+            this.roles = new HashSet<>();
+        }
         this.roles.add(role);
     }
     
     public void removeRole(Role role) {
-        this.roles.remove(role);
+        if (this.roles != null) {
+            this.roles.remove(role);
+        }
     }
     
     public boolean hasRole(String roleName) {
+        if (roles == null) return false;
         return roles.stream()
                 .anyMatch(role -> role.getName().equals(roleName));
     }
