@@ -24,9 +24,7 @@ public class AuthController {
     
     private final AuthService authService;
     
-    /**
-     * Đăng nhập
-     */
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
@@ -39,9 +37,7 @@ public class AuthController {
         }
     }
     
-    /**
-     * Đăng ký
-     */
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
@@ -61,9 +57,7 @@ public class AuthController {
         }
     }
     
-    /**
-     * Làm mới token
-     */
+
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
         try {
@@ -76,9 +70,7 @@ public class AuthController {
         }
     }
     
-    /**
-     * Đăng xuất
-     */
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         try {
@@ -96,9 +88,7 @@ public class AuthController {
         }
     }
     
-    /**
-     * Đổi mật khẩu
-     */
+
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
         try {
@@ -114,9 +104,7 @@ public class AuthController {
         }
     }
     
-    /**
-     * Lấy thông tin người dùng hiện tại
-     */
+
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser() {
         try {
@@ -142,7 +130,7 @@ public class AuthController {
         return response;
     }
     
-    // DTO Classes
+
     @Data
     public static class LoginRequest {
         private String username;

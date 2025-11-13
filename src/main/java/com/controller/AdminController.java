@@ -21,11 +21,7 @@ public class AdminController {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    
-    /**
-     * Reset password cho user (chỉ dùng trong development)
-     * Endpoint này không nên expose trong production
-     */
+
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
@@ -50,9 +46,7 @@ public class AdminController {
         }
     }
     
-    /**
-     * Tạo tài khoản admin mới với password đơn giản
-     */
+
     @PostMapping("/create-default-admin")
     public ResponseEntity<?> createDefaultAdmin() {
         try {
@@ -88,9 +82,7 @@ public class AdminController {
         }
     }
     
-    /**
-     * Test endpoint để kiểm tra password encoding
-     */
+
     @PostMapping("/test-password")
     public ResponseEntity<?> testPassword(@RequestBody TestPasswordRequest request) {
         String encoded = passwordEncoder.encode(request.getPassword());
@@ -104,9 +96,7 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
     
-    /**
-     * Kiểm tra password của user
-     */
+
     @PostMapping("/verify-password")
     public ResponseEntity<?> verifyPassword(@RequestBody VerifyPasswordRequest request) {
         try {
@@ -135,9 +125,7 @@ public class AdminController {
         return response;
     }
     
-    /**
-     * Debug endpoint - Xem chi tiết user và test password
-     */
+
     @GetMapping("/debug-user/{username}")
     public ResponseEntity<?> debugUser(@PathVariable String username) {
         try {
@@ -156,14 +144,6 @@ public class AdminController {
                     .map(r -> r.getName())
                     .toList());
             
-            // Test với password "123456"
-            boolean test123456 = passwordEncoder.matches("123456", user.getPassword());
-            response.put("matches_123456", test123456);
-            
-            // Test với password "password123"
-            boolean testPassword123 = passwordEncoder.matches("password123", user.getPassword());
-            response.put("matches_password123", testPassword123);
-            
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -171,26 +151,20 @@ public class AdminController {
         }
     }
     
-    /**
-     * Cập nhật password trực tiếp trong database
-     */
     @PostMapping("/update-password-direct")
     public ResponseEntity<?> updatePasswordDirect(@RequestBody UpdatePasswordRequest request) {
         try {
             UserAccount user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
-            // Encode password mới
             String encodedPassword = passwordEncoder.encode(request.getNewPassword());
-            
-            // Update trực tiếp
+
             user.setPassword(encodedPassword);
             user.setEnabled(true);
             user.setAccountNonLocked(true);
             user.setFailedLoginAttempts(0);
             userRepository.save(user);
             
-            // Verify ngay
             boolean matches = passwordEncoder.matches(request.getNewPassword(), encodedPassword);
             
             Map<String, Object> response = new HashMap<>();

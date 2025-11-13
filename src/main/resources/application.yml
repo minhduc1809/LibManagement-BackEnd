@@ -36,8 +36,8 @@ spring:
       password: admin123
 jwt:
   secret: mySecretKeyForLibraryManagementSystemMustBeLongEnoughForHS256Algorithm
-  expiration: 86400000        # 24 hours in milliseconds
-  refresh-expiration: 604800000  # 7 days in milliseconds
+  expiration: 86400000    
+  refresh-expiration: 604800000  
 
 server:
   port: 8080

@@ -167,35 +167,30 @@ INSERT INTO roles (name, description, created_at, updated_at) VALUES
 ('ROLE_LIBRARIAN', 'Thủ thư', NOW(), NOW()),
 ('ROLE_READER', 'Độc giả', NOW(), NOW());
 
--- ==============================================
--- INSERT USER ACCOUNTS (Plain Text Password)
--- Tất cả password: "123456"
--- ==============================================
-INSERT INTO user_accounts (username, password, email, full_name, phone_number, enabled, account_non_locked, failed_login_attempts, created_at, updated_at) VALUES
-('admin', '123456', 'admin@library.com', 'Quản Trị Viên', '0900000001', true, true, 0, NOW(), NOW()),
-('librarian1', '123456', 'thulan@library.com', 'Nguyễn Thị Lan', '0900000002', true, true, 0, NOW(), NOW()),
-('librarian2', '123456', 'thuhuong@library.com', 'Trần Thị Hương', '0900000003', true, true, 0, NOW(), NOW()),
-('reader1', '123456', 'nguyenvanan@gmail.com', 'Nguyễn Văn An', '0987654321', true, true, 0, NOW(), NOW()),
-('reader2', '123456', 'tranthibinh@gmail.com', 'Trần Thị Bình', '0976543210', true, true, 0, NOW(), NOW()),
-('reader3', '123456', 'leminhcuong@gmail.com', 'Lê Minh Cường', '0965432109', true, true, 0, NOW(), NOW());
 
--- ==============================================
--- ASSIGN ROLES TO USERS
--- ==============================================
+INSERT INTO user_accounts (username, password, email, full_name, phone_number, enabled, account_non_locked, failed_login_attempts, created_at, updated_at) VALUES
+
+('admin', '$2a$10$9ZKqBJT4/AdgUdW1iH5kZeQTWlctgLhFJHQc.dRSoxlZPtFN3RDou', 'admin@library.com', 'Quản Trị Viên', '0900000001', true, true, 0, NOW(), NOW()),
+
+
+('librarian1', '$2a$10$9ZKqBJT4/AdgUdW1iH5kZeQTWlctgLhFJHQc.dRSoxlZPtFN3RDou', 'thulan@library.com', 'Nguyễn Thị Lan', '0900000002', true, true, 0, NOW(), NOW()),
+('librarian2', '$2a$10$9ZKqBJT4/AdgUdW1iH5kZeQTWlctgLhFJHQc.dRSoxlZPtFN3RDou', 'thuhuong@library.com', 'Trần Thị Hương', '0900000003', true, true, 0, NOW(), NOW()),
+
+('reader1', '$2a$10$9ZKqBJT4/AdgUdW1iH5kZeQTWlctgLhFJHQc.dRSoxlZPtFN3RDou', 'nguyenvanan@gmail.com', 'Nguyễn Văn An', '0987654321', true, true, 0, NOW(), NOW()),
+('reader2', '$2a$10$9ZKqBJT4/AdgUdW1iH5kZeQTWlctgLhFJHQc.dRSoxlZPtFN3RDou', 'tranthibinh@gmail.com', 'Trần Thị Bình', '0976543210', true, true, 0, NOW(), NOW()),
+('reader3', '$2a$10$9ZKqBJT4/AdgUdW1iH5kZeQTWlctgLhFJHQc.dRSoxlZPtFN3RDou', 'leminhcuong@gmail.com', 'Lê Minh Cường', '0965432109', true, true, 0, NOW(), NOW());
+
 INSERT INTO user_roles (user_id, role_id) VALUES
--- Admin có tất cả roles
+
 (1, 1), (1, 2), (1, 3),
--- Librarians
+
 (2, 2), (2, 3),
 (3, 2), (3, 3),
--- Readers
+
 (4, 3),
 (5, 3),
 (6, 3);
 
--- ==============================================
--- INSERT BOOKS
--- ==============================================
 INSERT INTO books (book_code, title, author, publisher, publish_year, category, isbn, total_quantity, available_quantity, description, image_url, status, created_at, updated_at) VALUES
 -- Văn học Việt Nam
 ('VH001', 'Số đỏ', 'Vũ Trọng Phụng', 'NXB Văn học', 1936, 'Văn học Việt Nam', '9786041000001', 15, 15, 'Tiểu thuyết hiện thực phê phán của Vũ Trọng Phụng', 'https://via.placeholder.com/150', 'AVAILABLE', CURDATE(), CURDATE()),
@@ -317,24 +312,24 @@ ORDER BY total_books DESC;
 -- TEST CREDENTIALS
 -- ==============================================
 /*
-🔐 TÀI KHOẢN TEST (Password: 123456)
+🔐 TÀI KHOẢN TEST (Password: 12345678)
 
 1. ADMIN:
    Username: admin
-   Password: 123456
+   Password: 12345678
    
 2. LIBRARIAN:
    Username: librarian1 hoặc librarian2
-   Password: 123456
+   Password: 12345678
    
 3. READER:
    Username: reader1, reader2, reader3
-   Password: 123456
+   Password: 12345678
 
 📝 TEST LOGIN:
 POST http://localhost:8080/api/auth/login
 {
   "username": "admin",
-  "password": "123456"
+  "password": "12345678"
 }
 */
