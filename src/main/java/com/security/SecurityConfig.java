@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -26,7 +26,8 @@ public class SecurityConfig {
     
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+
+        return NoOpPasswordEncoder.getInstance();
     }
     
     @Bean
@@ -41,7 +42,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -49,23 +50,14 @@ public class SecurityConfig {
             .cors(cors -> cors.configure(http))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints - KHÔNG CẦN AUTHENTICATION
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/admin/**").permitAll() // ⚠️ CHỈ CHO DEBUG - XÓA TRONG PRODUCTION
+                .requestMatchers("/admin/**").permitAll()
                 .requestMatchers("/books/**").permitAll()
                 .requestMatchers("/readers/**").permitAll()
-                
-                // Statistics - require authentication
                 .requestMatchers("/statistics/**").authenticated()
-                
-                // Admin only
                 .requestMatchers("/users/**").hasRole("ADMIN")
-                
-                // Librarian and Admin
                 .requestMatchers("/borrows/**", "/penalties/**", "/reservations/**")
                     .hasAnyRole("LIBRARIAN", "ADMIN")
-                
-                // Any authenticated user
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
