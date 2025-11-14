@@ -35,43 +35,31 @@ public class AuthService {
     public Map<String, Object> login(String username, String password) {
         log.info("=== LOGIN ATTEMPT ===");
         log.info("Username: {}", username);
-        log.info("Password length: {}", password != null ? password.length() : 0);
         
         try {
-            // 1. Kiểm tra user có tồn tại không
+            // Kiểm tra user có tồn tại không
             UserAccount user = userRepository.findByUsername(username)
                     .orElseThrow(() -> {
                         log.error("User not found: {}", username);
-                        return new RuntimeException("User not found");
+                        return new RuntimeException("Tên đăng nhập hoặc mật khẩu không đúng");
                     });
             
             log.info("User found: {}", user.getUsername());
             log.info("User enabled: {}", user.getEnabled());
             log.info("User locked: {}", !user.getAccountNonLocked());
-            log.info("User roles: {}", user.getRoles().size());
-            log.info("Stored password hash: {}", user.getPassword().substring(0, 20) + "...");
             
-            // 2. Kiểm tra password thủ công trước
-            boolean passwordMatches = passwordEncoder.matches(password, user.getPassword());
-            log.info("Manual password check: {}", passwordMatches);
-            
-            if (!passwordMatches) {
-                log.error("Password does not match for user: {}", username);
-                throw new BadCredentialsException("Invalid password");
-            }
-            
-            // 3. Kiểm tra trạng thái tài khoản
+            // Kiểm tra trạng thái tài khoản
             if (!user.getEnabled()) {
                 log.error("User account is disabled: {}", username);
-                throw new RuntimeException("User account is disabled");
+                throw new RuntimeException("Tài khoản đã bị vô hiệu hóa");
             }
             
             if (!user.getAccountNonLocked()) {
                 log.error("User account is locked: {}", username);
-                throw new RuntimeException("User account is locked");
+                throw new RuntimeException("Tài khoản đã bị khóa do đăng nhập sai quá nhiều lần");
             }
             
-            // 4. Authenticate với Spring Security
+            // Authenticate với Spring Security
             log.info("Attempting Spring Security authentication...");
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password)
@@ -82,13 +70,13 @@ public class AuthService {
             
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
-            // 5. Generate tokens
+            // Generate tokens
             String accessToken = jwtTokenProvider.generateToken(authentication);
             String refreshToken = jwtTokenProvider.generateRefreshToken(username);
             
             log.info("Tokens generated successfully");
             
-            // 6. Update user
+            // Update user
             user.setLastLoginAt(LocalDateTime.now());
             user.setFailedLoginAttempts(0);
             user.setRefreshToken(refreshToken);
@@ -96,7 +84,13 @@ public class AuthService {
             
             log.info("User updated successfully");
             
-            // 7. Build response
+            // Determine role
+            String userRole = "READER";
+            if (user.hasRole(Role.LIBRARIAN)) {
+                userRole = "LIBRARIAN";
+            }
+            
+            // Build response
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("accessToken", accessToken);
@@ -105,6 +99,7 @@ public class AuthService {
             response.put("username", user.getUsername());
             response.put("fullName", user.getFullName());
             response.put("email", user.getEmail());
+            response.put("role", userRole);
             response.put("roles", user.getRoles());
             
             log.info("=== LOGIN SUCCESS ===");
@@ -112,19 +107,14 @@ public class AuthService {
             
         } catch (BadCredentialsException e) {
             log.error("Bad credentials for user: {}", username);
-            log.error("Exception: {}", e.getMessage());
-            
             updateFailedAttempts(username);
-            throw new RuntimeException("Invalid username or password");
+            throw new RuntimeException("Tên đăng nhập hoặc mật khẩu không đúng");
             
         } catch (Exception e) {
             log.error("Login exception for user: {}", username);
-            log.error("Exception type: {}", e.getClass().getName());
             log.error("Exception message: {}", e.getMessage());
-            log.error("Stack trace: ", e);
-            
             updateFailedAttempts(username);
-            throw new RuntimeException("Invalid username or password");
+            throw new RuntimeException("Đăng nhập thất bại: " + e.getMessage());
         }
     }
     
@@ -151,21 +141,21 @@ public class AuthService {
         log.info("Username: {}", userAccount.getUsername());
         
         if (userRepository.existsByUsername(userAccount.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            throw new RuntimeException("Tên đăng nhập đã tồn tại");
         }
         
         if (userRepository.existsByEmail(userAccount.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("Email đã được sử dụng");
         }
         
-        String rawPassword = userAccount.getPassword();
-        String encodedPassword = passwordEncoder.encode(rawPassword);
-        log.info("Password encoded: {}", encodedPassword.substring(0, 20) + "...");
-        
+        String encodedPassword = passwordEncoder.encode(userAccount.getPassword());
         userAccount.setPassword(encodedPassword);
         
-        Role role = roleRepository.findByName(roleName != null ? roleName : Role.READER)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+        // Default role là READER nếu không chỉ định
+        String finalRoleName = (roleName != null && !roleName.isEmpty()) ? roleName : Role.READER;
+        
+        Role role = roleRepository.findByName(finalRoleName)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy vai trò: " + finalRoleName));
         
         userAccount.addRole(role);
         userAccount.setEnabled(true);
@@ -176,9 +166,10 @@ public class AuthService {
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "User registered successfully");
+        response.put("message", "Đăng ký tài khoản thành công");
         response.put("username", savedUser.getUsername());
         response.put("email", savedUser.getEmail());
+        response.put("role", finalRoleName);
         
         log.info("=== REGISTER SUCCESS ===");
         return response;
@@ -186,15 +177,15 @@ public class AuthService {
     
     public Map<String, Object> refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new RuntimeException("Invalid or expired refresh token");
+            throw new RuntimeException("Refresh token không hợp lệ hoặc đã hết hạn");
         }
         
         String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
         UserAccount user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         
         if (!refreshToken.equals(user.getRefreshToken())) {
-            throw new RuntimeException("Refresh token does not match");
+            throw new RuntimeException("Refresh token không khớp");
         }
         
         String newAccessToken = jwtTokenProvider.generateToken(username);
@@ -214,7 +205,7 @@ public class AuthService {
     
     public void logout(String username) {
         UserAccount user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         
         user.setRefreshToken(null);
         userRepository.save(user);
@@ -225,10 +216,10 @@ public class AuthService {
     
     public Map<String, Object> changePassword(String username, String oldPassword, String newPassword) {
         UserAccount user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new RuntimeException("Old password is incorrect");
+            throw new RuntimeException("Mật khẩu cũ không đúng");
         }
         
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -237,7 +228,7 @@ public class AuthService {
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "Password changed successfully");
+        response.put("message", "Đổi mật khẩu thành công");
         
         log.info("Password changed for user: {}", username);
         return response;

@@ -49,23 +49,32 @@ public class SecurityConfig {
             .cors(cors -> cors.configure(http))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints - KHÔNG CẦN AUTHENTICATION
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/admin/**").permitAll() // ⚠️ CHỈ CHO DEBUG - XÓA TRONG PRODUCTION
-                .requestMatchers("/books/**").permitAll()
-                .requestMatchers("/readers/**").permitAll()
                 
-                // Statistics - require authentication
-                .requestMatchers("/statistics/**").authenticated()
+                // ==========================================
+                // LIBRARIAN ONLY - Có toàn quyền admin
+                // ==========================================
+                // Quản lý sách
+                .requestMatchers("/books/**").hasRole("LIBRARIAN")
                 
-                // Admin only
-                .requestMatchers("/users/**").hasRole("ADMIN")
+                // Quản lý độc giả
+                .requestMatchers("/readers/**").hasRole("LIBRARIAN")
                 
-                // Librarian and Admin
-                .requestMatchers("/borrows/**", "/penalties/**", "/reservations/**")
-                    .hasAnyRole("LIBRARIAN", "ADMIN")
+                // Quản lý mượn trả
+                .requestMatchers("/borrows/**").hasRole("LIBRARIAN")
                 
-                // Any authenticated user
+                // Quản lý phạt
+                .requestMatchers("/penalties/**").hasRole("LIBRARIAN")
+                
+                // Quản lý đặt trước
+                .requestMatchers("/reservations/**").hasRole("LIBRARIAN")
+                
+                // Thống kê
+                .requestMatchers("/statistics/**").hasRole("LIBRARIAN")
+                
+                // Quản lý user (chỉ librarian)
+                .requestMatchers("/users/**").hasRole("LIBRARIAN")
+                
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
